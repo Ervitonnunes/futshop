@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Login FutShop</title>
+<style>
+body{
+font-family:Arial;
+background:#111;
+color:white;
+display:flex;
+align-items:center;
+justify-content:center;
+height:100vh;
+}
+
+.box{
+background:#222;
+padding:30px;
+border-radius:10px;
+width:300px;
+}
+
+input,button{
+width:100%;
+padding:10px;
+margin-top:10px;
+}
+
+button{
+background:#0a7a3d;
+color:white;
+border:none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+<h2>Admin FutShop</h2>
+
+<input id="user" placeholder="Usuário">
+<input id="pass" type="password" placeholder="Senha">
+
+<button onclick="login()">Entrar</button>
+</div>
+
+<script>
+
+function login(){
+
+let user=document.getElementById("user").value
+let pass=document.getElementById("pass").value
+
+if(user==="erviton" && pass==="123456"){
+
+window.location="painel.html"
+
+}else{
+
+alert("Login incorreto")
+
+}
+
+}
+
+</script>
+
+</body>
+</html>
