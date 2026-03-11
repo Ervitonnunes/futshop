@@ -1,1 +1,10 @@
 admin/login.html
+/futshop
+   index.html
+   fundo-futshop.jpg
+   banner1.jpg
+   banner2.jpg
+   banner3.jpg
+   /admin
+      login.html
+      painel.html
