@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FutShop</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,Arial;background:url('fundo-futshop.jpg') center/cover fixed no-repeat;color:#111}
+
+header{background:#000;color:#fff}
+.header-container{max-width:1200px;margin:auto;display:flex;align-items:center;justify-content:space-between;padding:18px}
+.logo{font-size:24px;font-weight:700}
+nav a{color:white;text-decoration:none;margin-left:20px;font-weight:600;cursor:pointer}
+
+.hero{position:relative;height:520px;overflow:hidden;color:white}
+.slide{position:absolute;inset:0;background-size:contain;background-position:center bottom;background-repeat:no-repeat;opacity:0;transition:opacity 1s}
+.slide.active{opacity:1}
+.hero-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0.3),rgba(0,0,0,0.6))}
+.hero-content{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);text-align:center;z-index:2;max-width:800px;padding:20px}
+.hero-title{font-size:44px;font-weight:700;margin-bottom:12px}
+.hero-sub{font-size:18px;opacity:0.9;margin-bottom:20px}
+.hero-btn{display:inline-block;background:#f2b705;color:#000;padding:14px 26px;border-radius:30px;font-weight:700;text-decoration:none;transition:0.3s}
+.hero-btn:hover{transform:scale(1.05)}
+
+.hero h1{margin:0;font-size:42px}
+
+.container{max-width:1200px;margin:auto;padding:30px}
+
+.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:25px}
+
+.card{background:white;border-radius:14px;padding:16px;box-shadow:0 6px 18px rgba(0,0,0,0.08)}
+.card img{width:100%;border-radius:10px}
+.card h3{margin:10px 0}
+.price{font-size:20px;font-weight:700;color:#0a7a3d}
+
+select,button,input{width:100%;padding:10px;border-radius:8px;margin-top:8px;border:1px solid #ddd}
+button{background:#111;color:white;font-weight:600;border:none;cursor:pointer}
+
+.cart-panel{position:fixed;right:0;top:0;width:340px;height:100%;background:white;box-shadow:-4px 0 20px rgba(0,0,0,0.2);padding:20px;display:none;flex-direction:column}
+.cart-item{display:flex;justify-content:space-between;margin-bottom:8px}
+
+.checkout{background:#0a7a3d;color:white}
+
+.admin{background:white;padding:20px;margin-top:40px;border-radius:12px}
+
+footer{background:#000;color:white;text-align:center;padding:25px;margin-top:40px}
+
+@media(max-width:768px){
+.hero h1{font-size:30px}
+.products{grid-template-columns:1fr}
+.header-container{flex-direction:column;gap:10px}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<div class="header-container">
+<div class="logo">FUTSHOP</div>
+<nav>
+<a onclick="abrirCarrinho()">Carrinho 🛒</a>
+
+</nav>
+</div>
+</header>
+
+<section class="hero">
+<div class="slide active" style="background-image:url('banner1.jpg')"></div>
+<div class="slide" style="background-image:url('banner2.jpg')"></div>
+<div class="slide" style="background-image:url('banner3.jpg')"></div>
+<div class="hero-overlay"></div>
+<div class="hero-content">
+<div class="hero-title">Vista-se Como um Campeão</div>
+<div class="hero-sub">Camisas de futebol das maiores equipes do mundo</div>
+<a class="hero-btn" href="#produtos">VER COLEÇÃO</a>
+</div>
+</section>
+
+<div class="container">
+
+<h2>Produtos</h2>
+<div class="products" id="produtos"></div>
+
+
+
+</div>
+
+<div class="cart-panel" id="cart">
+<h2>Carrinho</h2>
+<div id="cart-items"></div>
+
+<input id="cep" placeholder="Digite seu CEP">
+<button onclick="calcularFrete()">Calcular Frete</button>
+<p id="frete"></p>
+
+<h3 id="total">Total: R$0</h3>
+<button class="checkout" onclick="checkoutWhats()">Finalizar Pedido</button>
+</div>
+
+<footer>
+<p>© FutShop Ecommerce</p>
+</footer>
+
+<script>
+// segurança básica
+let actionCount=0
+function securityCheck(){
+ actionCount++
+ if(actionCount>80){
+  alert('Muitas ações detectadas. Recarregue a página.')
+  throw new Error('Rate limit')
+ }
+}
+
+// produtos
+let produtos = JSON.parse(localStorage.getItem('produtos')) || [
+{
+nome:'Camisa Real Madrid',
+preco:139.90,
+imagem:'https://images.unsplash.com/photo-1521412644187-c49fa049e84d',
+estoque:{P:5,M:5,G:5,GG:3,XGG:2}
+}
+]
+
+let carrinho=[]
+
+// carrossel banner
+let slideIndex=0
+function trocarSlide(){
+ const slides=document.querySelectorAll('.slide')
+ slides.forEach(s=>s.classList.remove('active'))
+ slideIndex++
+ if(slideIndex>=slides.length) slideIndex=0
+ slides[slideIndex].classList.add('active')
+}
+setInterval(trocarSlide,4000)
+
+// renderizar produtos
+function renderProdutos(){
+ const div=document.getElementById('produtos')
+ div.innerHTML=''
+
+ produtos.forEach((p,index)=>{
+
+ let tamanhos=''
+
+ for(let t in p.estoque){
+  if(p.estoque[t]>0){
+   tamanhos+=`<option value="${t}">${t} (${p.estoque[t]})</option>`
+  }else{
+   tamanhos+=`<option disabled>${t} (Esgotado)</option>`
+  }
+ }
+
+ div.innerHTML+=`
+ <div class="card">
+ <img src="${p.imagem}">
+ <h3>${p.nome}</h3>
+ <p class="price">R$${p.preco}</p>
+ <select class="size">${tamanhos}</select>
+ <button onclick="addCarrinho(this,${index})">Adicionar ao Carrinho</button>
+ </div>`
+
+ })
+}
+
+// adicionar ao carrinho
+function addCarrinho(btn,i){
+ securityCheck()
+ const card=btn.closest('.card')
+ const tamanho=card.querySelector('.size').value
+
+ carrinho.push({
+  produto:produtos[i].nome,
+  preco:produtos[i].preco,
+  tamanho
+ })
+
+ produtos[i].estoque[tamanho]--
+
+ renderProdutos()
+ renderCart()
+}
+
+// abrir carrinho
+function abrirCarrinho(){
+ const c=document.getElementById('cart')
+ c.style.display=c.style.display==='flex'?'none':'flex'
+}
+
+// renderizar carrinho
+function renderCart(){
+ let total=0
+ const div=document.getElementById('cart-items')
+ div.innerHTML=''
+
+ carrinho.forEach((p,index)=>{
+
+ total+=p.preco
+
+ div.innerHTML+=`<div class="cart-item">
+ <span>${p.produto} (${p.tamanho})</span>
+ <span>R$${p.preco}</span>
+ </div>`
+
+ })
+
+ document.getElementById('total').innerText='Total: R$'+total.toFixed(2)
+}
+
+// frete simples
+function calcularFrete(){
+ securityCheck()
+ const cepInput=document.getElementById('cep')
+ const cep=cepInput.value.replace(/[^0-9]/g,'')
+
+ if(cep.length<5){
+  alert('CEP inválido')
+  return
+ }
+
+ let valor=20
+
+ if(cep.startsWith('0')) valor=15
+ if(cep.startsWith('7')) valor=25
+
+ document.getElementById('frete').innerText='Frete: R$'+valor
+}
+
+// finalizar pedido whatsapp
+function checkoutWhats(){
+ securityCheck()
+
+ if(carrinho.length===0){
+  alert('Carrinho vazio')
+  return
+ }
+
+ let msg='Pedido FutShop:%0A%0A'
+
+ carrinho.forEach(p=>{
+  msg+=`${p.produto} (${p.tamanho}) - R$${p.preco}%0A`
+ })
+
+ window.open(`https://wa.me/5511959088629?text=${msg}`)
+}
+
+renderProdutos()
+</script>
+
+<div style="position:fixed;bottom:20px;right:20px;background:white;border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,0.25);padding:14px 16px;z-index:999;font-family:Inter,Arial;min-width:220px">
+<div style="font-weight:700;margin-bottom:8px">Atendimento FutShop</div>
+
+<a href="https://wa.me/5511959088629?text=Olá!%20Vim%20pelo%20site%20da%20FutShop" target="_blank" style="display:block;background:#25D366;color:white;text-decoration:none;padding:8px 10px;border-radius:8px;margin-bottom:6px;font-size:14px">🟢 Erviton – Vendas</a>
+
+<a href="https://wa.me/5511986486580?text=Olá!%20Preciso%20de%20suporte%20na%20FutShop" target="_blank" style="display:block;background:#128C7E;color:white;text-decoration:none;padding:8px 10px;border-radius:8px;font-size:14px">🟢 Fabio – Suporte</a>
+</div>
+
+</body>
+</html>
